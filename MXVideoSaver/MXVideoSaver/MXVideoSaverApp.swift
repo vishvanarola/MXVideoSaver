@@ -16,10 +16,6 @@ struct MXVideoSaverApp: App {
     @StateObject var adManager = AdManager.shared
     
     init() {
-        IQKeyboardManager.shared.isEnabled = true
-        IQKeyboardManager.shared.resignOnTouchOutside = true
-        IQKeyboardManager.shared.keyboardDistance = 10
-        
         ReachabilityManager.shared.startMonitoring()
         
         FirebaseApp.configure()
@@ -27,10 +23,9 @@ struct MXVideoSaverApp: App {
         PremiumManager.shared.configureRevenueCat()
         
         AdServices().fetchNewRemoteAdsData { response in
+            remoteConfigModel = response
             AdManager.shared.configureAds(response.canShowUMP ?? false)
             interstitialIntergap = response.intergap ?? 3
-            remoteConfigAdShowCount = response.intergap ?? 3
-            restoreShow = response.restoreShow ?? false
             if let appOpenAdUnitID = response.appOpen {
                 AdManager.shared.appOpenAdUnitID = appOpenAdUnitID
                 if !PremiumManager.shared.isPremium {
@@ -54,7 +49,7 @@ struct MXVideoSaverApp: App {
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Collage.self,
+            Collage.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
