@@ -65,12 +65,18 @@ struct HomeView: View {
             }
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {
-                case .repeatText: RepeatTextView()
-                case .emojiText: EmojiTextView()
-                case .stylishText: StylishTextView()
-                case .directText: DirectTextView()
-                case .flipText: FlipTextView()
-                case .hashtag: HashtagView()
+                case .repeatText: RepeatTextView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
+                case .emojiText: EmojiTextView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
+                case .stylishText: StylishTextView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
+                case .directText: DirectChatView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
+                case .flipText: FlipTextView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
+                case .hashtag: HashtagView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
                 case .premium: PremiumView()
                 }
             }
@@ -348,18 +354,8 @@ struct VideoThumbnailViewNewHome: View {
         .frame(height: 80)
         .background(.white)
         .cornerRadius(15)
-        .shadow(radius: 3)
+        .shadow(radius: 2)
         .padding(.bottom, 10)
-        
-//        .padding(.horizontal, 10)
-//        .frame(height: 50)
-//        .background(.gray.opacity(0.05))
-//        .background(.white)
-//        .cornerRadius(30)
-//        .shadow(radius: 3)
-//        .padding(.top, 20)
-//        .padding(.horizontal, 20)
-        
         .onTapGesture {
             if ReachabilityManager.shared.isNetworkAvailable {
                 isPresentingPlayer = true

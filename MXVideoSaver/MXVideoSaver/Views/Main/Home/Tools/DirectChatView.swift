@@ -1,21 +1,22 @@
 //
-//  RepeatTextView.swift
+//  DirectChatView.swift
 //  MXVideoSaver
 //
 //  Created by vishva narola on 02/09/25.
 //
 
 import SwiftUI
+import MessageUI
 
-struct RepeatTextView: View {
+struct DirectChatView: View {
     @State private var enterTextInput: String = ""
-    @State private var repeaterCountInput: String = ""
-    @State private var isNewLineSelected: Bool = true
-    @State private var outputText: String = ""
+    @State private var messageText: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var showNoInternetAlert: Bool = false
     @State private var showToast = false
+    @State private var countryCode: String = ""
+    @State private var showMessageComposer = false
     @Binding var isTabBarHidden: Bool
     @Binding var navigationPath: NavigationPath
     
@@ -26,9 +27,8 @@ struct RepeatTextView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 25) {
                         enterTextView
-                        enterRepeaterView
-                        outputButton
                         outputTextView
+                        outputButton
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical)
@@ -51,15 +51,26 @@ struct RepeatTextView: View {
         .onTapGesture {
             UIApplication.shared.hideKeyboard()
         }
+        .onAppear {
+            let regionCode = Locale.current.region?.identifier ?? "US"
+            let phoneCode = countryDialingCodes[regionCode] ?? "+1"
+            countryCode = phoneCode
+        }
         .ignoresSafeArea()
         .noInternetAlert(isPresented: $showNoInternetAlert)
+        .sheet(isPresented: $showMessageComposer) {
+            MessageComposer(
+                recipients: [countryCode + enterTextInput],
+                body: messageText
+            )
+        }
     }
     
     var headerView: some View {
         HeaderView(
             leftButtonImageName: "ic_back",
             rightButtonImageName: nil,
-            headerTitle: "Text Repeater",
+            headerTitle: "Direct Chat",
             leftButtonAction: {
                 AdManager.shared.showInterstitialAd()
                 isTabBarHidden = false
@@ -70,83 +81,63 @@ struct RepeatTextView: View {
     }
     
     var enterTextView: some View {
-        TextFieldView(headerTitle: "Enter Text", placeholder: "Enter text here..", text: $enterTextInput)
-    }
-    
-    var enterRepeaterView: some View {
-        HStack(alignment: .bottom, spacing: 20) {
-            TextFieldView(headerTitle: "Repetition", placeholder: "E.g. 3", keyboardType: .numberPad, text: $repeaterCountInput)
-            checkBoxView
-                .padding(.bottom, 13)
+        HStack {
+            Text(countryCode)
+                .font(FontConstants.MontserratFonts.semiBold(size: 20))
+                .foregroundStyle(.black)
+            Rectangle()
+                .fill(textGrayColor)
+                .frame(width: 2)
+                .padding(.horizontal, 10)
+            TextField("", text: $enterTextInput, prompt: Text("Enter Mobile Number")
+                .font(FontConstants.MontserratFonts.medium(size: 16))
+                .foregroundColor(.gray)
+            )
+            .font(FontConstants.MontserratFonts.medium(size: 16))
+            .keyboardType(.phonePad)
         }
-    }
-    
-    var checkBoxView: some View {
-        Button {
-            AdManager.shared.showInterstitialAd()
-            isNewLineSelected.toggle()
-        } label: {
-            HStack(spacing: 15) {
-                Image(isNewLineSelected ? "ic_check_fill" : "ic_check_box")
-                    .resizable()
-                    .frame(width: 25, height: 25)
-                Text("New Line")
-                    .font(FontConstants.MontserratFonts.medium(size: 18))
-                    .foregroundStyle(.black)
-            }
-        }
+        .padding()
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(pinkThemeColor, lineWidth: 1)
+        )
+        .background(pinkThemeColor.opacity(0.05))
     }
     
     var outputTextView: some View {
-        ZStack(alignment: .topTrailing) {
-            TextEditor(text: $outputText)
+        ZStack(alignment: .topLeading) {
+            if messageText.isEmpty {
+                Text("Type Message...")
+                    .font(FontConstants.MontserratFonts.medium(size: 18))
+                    .foregroundColor(textGrayColor)
+                    .padding()
+                    .padding(.top, 5)
+                    .padding(.leading, 7)
+            }
+            TextEditor(text: $messageText)
                 .scrollContentBackground(.hidden)
                 .font(FontConstants.MontserratFonts.medium(size: 18))
-                .foregroundStyle(.black)
-            
-            if !outputText.isEmpty {
-                HStack {
-                    Button {
-                        if !outputText.isEmpty {
-                            UIPasteboard.general.string = outputText
-                            withAnimation {
-                                showToast = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    showToast = false
-                                }
-                            }
-                        }
-                    } label: {
-                        Image("ic_text_copy")
-                    }
-                    Button {
-                        ShareHelper.share([outputText])
-                    } label: {
-                        Image("ic_text_share")
-                    }
-                }
-            }
+                .foregroundColor(.black)
+                .padding()
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cornerRadius(10)
         .frame(height: 250)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(redThemeColor, lineWidth: 1)
         )
         .background(pinkThemeColor.opacity(0.05))
+        .cornerRadius(10)
     }
     
     var outputButton: some View {
         Button {
             if ReachabilityManager.shared.isNetworkAvailable {
-                validateAndGenerateText()
+                validate()
             } else {
                 showNoInternetAlert = true
             }
         } label: {
-            Text("Repeat Text")
+            Text("Message")
                 .font(FontConstants.MontserratFonts.medium(size: 18))
                 .foregroundStyle(.white)
                 .frame(height: 50)
@@ -161,46 +152,40 @@ struct RepeatTextView: View {
         }
     }
     
-    private func validateAndGenerateText() {
+    private func validate() {
         guard !enterTextInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            alertMessage = "Please enter some text to repeat."
+            alertMessage = "Please enter mobile number"
             showAlert = true
             return
         }
-        
-        guard let count = Int(repeaterCountInput), count > 0 else {
-            alertMessage = "Please enter a valid repeater number greater than 0."
+        guard !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            alertMessage = "Please enter some text to send message."
             showAlert = true
             return
         }
         
         if PremiumManager.shared.isPremium || !PremiumManager.shared.hasUsed() {
             AdManager.shared.showInterstitialAd()
-            generateRepeatedText()
+            directChat()
             PremiumManager.shared.markUsed()
         } else {
             navigationPath.append(HomeDestination.premium)
         }
     }
     
-    private func generateRepeatedText() {
-        guard let count = Int(repeaterCountInput), count > 0, !enterTextInput.isEmpty else {
-            outputText = "Please enter valid input."
-            return
-        }
+    private func directChat() {
+        let fullNumber = countryCode + enterTextInput
         
-        let separator: String
-        if isNewLineSelected {
-            separator = "\n"
+        if MFMessageComposeViewController.canSendText() {
+            showMessageComposer = true
+            PremiumManager.shared.markUsed()
         } else {
-            separator = ""
+            alertMessage = "This device cannot send SMS."
+            showAlert = true
         }
-        
-        outputText = Array(repeating: enterTextInput, count: count).joined(separator: separator)
-        PremiumManager.shared.markUsed()
     }
 }
 
 #Preview {
-    RepeatTextView(isTabBarHidden: .constant(true), navigationPath: .constant(NavigationPath()))
+    DirectChatView(isTabBarHidden: .constant(true), navigationPath: .constant(NavigationPath()))
 }

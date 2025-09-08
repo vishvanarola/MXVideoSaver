@@ -24,7 +24,7 @@ struct TabBarView: View {
                 case .home:
                     HomeView(isTabBarHidden: $isTabBarHidden, isHiddenBanner: $isHiddenBanner)
                 case .myCollection:
-                    MyCollectionsView()
+                    MyCollectionsView(selectedTab: $selectedTab, isTabBarHidden: $isTabBarHidden, isHiddenBanner: $isHiddenBanner)
                 case .settings:
                     SettingsView()
                 }

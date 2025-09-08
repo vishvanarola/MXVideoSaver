@@ -231,4 +231,8 @@ extension UIApplication {
             .first?.windows
             .first(where: { $0.isKeyWindow })?.rootViewController
     }
+    
+    func hideKeyboard() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 }
