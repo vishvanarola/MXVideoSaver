@@ -77,7 +77,8 @@ struct HomeView: View {
                         .navigationBarBackButtonHidden(true)
                 case .hashtag: HashtagView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
                         .navigationBarBackButtonHidden(true)
-                case .premium: PremiumView()
+                case .premium: PremiumView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath, isHiddenBanner: $isHiddenBanner)
+                        .navigationBarBackButtonHidden(true)
                 }
             }
         }

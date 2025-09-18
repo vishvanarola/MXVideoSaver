@@ -26,7 +26,7 @@ struct TabBarView: View {
                 case .myCollection:
                     MyCollectionsView(selectedTab: $selectedTab, isTabBarHidden: $isTabBarHidden, isHiddenBanner: $isHiddenBanner)
                 case .settings:
-                    SettingsView()
+                    SettingsView(selectedTab: $selectedTab, isTabBarHidden: $isTabBarHidden, isHiddenBanner: $isHiddenBanner)
                 }
             }
             VStack(spacing: 0) {
@@ -43,6 +43,11 @@ struct TabBarView: View {
                     .background(
                         pinkThemeColor
                     )
+                }
+                if !isHiddenBanner && !PremiumManager.shared.isPremium && adManager.isBannerAdLoaded {
+                    BannerAdView()
+                        .frame(height: 70)
+                        .frame(maxWidth: .infinity)
                 }
             }
         }

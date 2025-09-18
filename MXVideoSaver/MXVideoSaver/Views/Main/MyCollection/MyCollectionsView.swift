@@ -43,7 +43,7 @@ struct MyCollectionsView: View {
                 case .photosCollage(let collage):
                     PhotosCollageView(collage: collage, isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath)
                 case .premium:
-                    PremiumView()
+                    PremiumView(isTabBarHidden: $isTabBarHidden, navigationPath: $navigationPath, isHiddenBanner: $isHiddenBanner)
                         .navigationBarBackButtonHidden(true)
                 }
             }
